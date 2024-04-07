@@ -21,6 +21,14 @@ builder.Services.AddDbContext<IMDBDbContext>(options =>
 
 var app = builder.Build();
 
+// Enable CORS to allow all origins
+app.UseCors(builder =>
+{
+    builder.AllowAnyOrigin()
+           .AllowAnyMethod()
+           .AllowAnyHeader();
+});
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
