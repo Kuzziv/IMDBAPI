@@ -1,11 +1,10 @@
-﻿using IMDBLib.DAO;
-using IMDBLib.DataBase;
-using IMDBLib.Models.Movie;
+﻿// MovieController.cs
+using IMDBLib.DTO;
 using IMDBLib.Models.Views;
-using IMDBLib.Services.DAOServices;
+using IMDBLib.Services.APIServices;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
+using System;
+using System.Threading.Tasks;
 
 namespace IMDBAPI.Controllers
 {
@@ -13,7 +12,6 @@ namespace IMDBAPI.Controllers
     [ApiController]
     public class MovieController : ControllerBase
     {
-
         private readonly IMovieService _movieService;
 
         public MovieController(IMovieService movieService)
@@ -21,107 +19,94 @@ namespace IMDBAPI.Controllers
             _movieService = movieService;
         }
 
-        // GET: api/<MovieController>
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<MovieView>>> Get(int pageNumber = 1, int pageSize = 10)
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchByMovieTitleAsync(string searchTitle, int page = 1, int pageSize = 10)
         {
             try
             {
-                var paginatedMovies = await _movieService.GetAllMovies(pageNumber, pageSize);
-
-                return Ok(paginatedMovies);
+                var movies = await _movieService.SearchByMovieTitleAsync(searchTitle, page, pageSize);
+                if (movies == null || !movies.Any())
+                {
+                    return NotFound($"Movie with name '{searchTitle}' not found.");
+                }
+                return Ok(movies);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                return StatusCode(500, "An error occurred while retrieving data.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
-        // make a get by the searchString 
-        [HttpGet("{searchString}")]
-        public async Task<ActionResult<IEnumerable<MovieView>>> Get(string searchString, int pageNumber = 1, int pageSize = 10)
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllMoviesAsync(int page = 1, int pageSize = 10)
         {
             try
             {
-                var paginatedMovies = await _movieService.GetMovieListByTitle(searchString, pageNumber, pageSize);
-                return Ok(paginatedMovies);
+                var movies = await _movieService.GetAllMoviesAsync(page, pageSize);
+                return Ok(movies);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                return StatusCode(500, "An error occurred while retrieving data.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
-        // GET: api/<MovieController>/tt0000001
-
-        [HttpDelete("{tconst}")]
-        public async Task<ActionResult<MovieView>> Delete(string tconst)
+        [HttpGet("{movieTconst}")]
+        public async Task<IActionResult> GetMovieByTconstAsync(string movieTconst)
         {
             try
             {
-                await _movieService.DeleteMovie(tconst);
-                return Ok();
-            }
-            catch (ArgumentException)
-            {
-                // Movie not found, return 404 Not Found
-                return NotFound("Movie not found");
+                var movie = await _movieService.GetMovieByTconstAsync(movieTconst);
+                if (movie == null)
+                    return NotFound($"Movie with Tconst {movieTconst} not found.");
+                return Ok(movie);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                return StatusCode(500, "An error occurred while deleting data.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddMovie([FromBody] TitleDAO titleDAO)
+        public async Task<IActionResult> AddMovieAsync(MovieDTO movie)
         {
             try
             {
-                // Call the service method to add the new movie
-                var isAdded = await _movieService.AddMovie(titleDAO);
-                if (isAdded)
-                {
-                    return Ok(); // Return 200 OK if addition is successful
-                }
-                else
-                {
-                    return StatusCode(500, "Failed to add movie"); // Return 500 Internal Server Error if addition fails
-                }
+                await _movieService.AddMovieAsync(movie);
+                return StatusCode(201, "Movie added successfully.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                return StatusCode(500, "An error occurred while adding movie.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
-        // update movie
-        [HttpPut]
-        public async Task<ActionResult> UpdateMovie([FromBody] TitleDAO titleDAO)
+        [HttpPut("{movieTconst}")]
+        public async Task<IActionResult> UpdateMovieAsync(string movieTconst, MovieDTO updatedMovie)
         {
             try
             {
-                // Call the service method to update the movie
-                var isUpdated = await _movieService.UpdateMovie(titleDAO);
-                if (isUpdated)
-                {
-                    return Ok(); // Return 200 OK if update is successful
-                }
-                else
-                {
-                    return StatusCode(500, "Failed to update movie"); // Return 500 Internal Server Error if update fails
-                }
+                await _movieService.UpdateMovieAsync(movieTconst, updatedMovie);
+                return Ok($"Movie with Tconst {movieTconst} updated successfully.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                return StatusCode(500, "An error occurred while updating movie.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
+        [HttpDelete("{movieTconst}")]
+        public async Task<IActionResult> DeleteMovieAsync(string movieTconst)
+        {
+            try
+            {
+                await _movieService.DeleteMovieAsync(movieTconst);
+                return Ok($"Movie with Tconst {movieTconst} deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }

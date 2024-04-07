@@ -1,22 +1,23 @@
 using IMDBLib.DataBase;
-using IMDBLib.Services.DAOServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-
+using IMDBLib.Services.APIServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Access configuration from WebApplication instance
+var configuration = builder.Configuration;
+
 // Add services to the container.
-builder.Services.AddScoped<IMovieService, MovieService>();
-builder.Services.AddScoped<IPersonService, PersonService>();
-builder.Services.AddScoped<MyDbContext>();
+builder.Services.AddScoped<IMovieService, MovieService>(); // Assuming MovieService implements IMovieService
+builder.Services.AddScoped<IPersonService, PersonService>(); // Assuming PersonService implements IPersonService
+builder.Services.AddDbContext<IMDBDbContext>(options =>
+    options.UseSqlServer(configuration.GetConnectionString("IMDBConnection")));
 
 var app = builder.Build();
 
