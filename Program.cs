@@ -17,7 +17,7 @@ var configuration = builder.Configuration;
 builder.Services.AddScoped<IMovieService, MovieService>(); // Assuming MovieService implements IMovieService
 builder.Services.AddScoped<IPersonService, PersonService>(); // Assuming PersonService implements IPersonService
 builder.Services.AddDbContext<IMDBDbContext>(options =>
-    options.UseSqlServer(configuration.GetConnectionString("IMDBConnection")));
+    options.UseSqlServer(configuration.GetConnectionString("IMDBConnectionUser")));
 
 var app = builder.Build();
 
