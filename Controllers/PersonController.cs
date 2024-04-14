@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using IMDBLib.DataBase;
+﻿// PersonController.cs
+using IMDBLib.DTO;
 using IMDBLib.Models.Views;
+using IMDBLib.Services.APIServices;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using IMDBLib.Services.DAOServices;
-using IMDBLib.Models.People;
-using IMDBLib.DAO;
 
 namespace IMDBAPI.Controllers
 {
@@ -21,41 +19,66 @@ namespace IMDBAPI.Controllers
             _personService = personService;
         }
 
-        // GET: api/<PersonController>
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PersonView>>> Get(int pageNumber = 1, int pageSize = 10)
+        [HttpGet("{nmconst}")]
+        public async Task<IActionResult> GetPersonByNmconstAsync(string nmconst)
         {
             try
             {
-                var paginatedPersons = await _personService.GetAllPersons(pageNumber, pageSize);
-                return Ok(paginatedPersons);
+                var person = await _personService.GetPersonByNmconstAsync(nmconst);
+                if (person == null)
+                    return NotFound($"Person with Nconst {nmconst} not found.");
+                return Ok(person);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                return StatusCode(500, "An error occurred while retrieving data.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
-        // make a controler that adds a person to the database
-        [HttpPost]
-        public async Task<ActionResult<PersonView>> Post(CrewDAO crewDAO)
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllPersonsAsync(int page = 1, int pageSize = 10)
         {
             try
             {
-                var newPerson = await _personService.AddPerson(crewDAO);
-                if (newPerson == true)
-                {
-                    return Ok(newPerson);
-                }
-                return BadRequest();
+                var persons = await _personService.GetAllPersonsAsync(page, pageSize);
+                return Ok(persons);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                return StatusCode(500, "An error occurred while adding a person.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-        
+
+        [HttpPost]
+        public async Task<IActionResult> AddPersonAsync(PersonDTO person)
+        {
+            try
+            {
+                if (await _personService.AddPersonAsync(person) == true)
+                {
+                    return StatusCode(201, "Person added successfully.");
+                }
+                return StatusCode(400, "Some whent worng");
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchPersonsByNameAsync(string searchName, int page = 1, int pageSize = 10)
+        {
+            try
+            {
+                var persons = await _personService.SearchPersonsByNameAsync(searchName, page, pageSize);
+                return Ok(persons);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }
