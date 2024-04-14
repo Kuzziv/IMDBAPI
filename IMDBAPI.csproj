@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <Reference Include="IMDBLib">
-      <HintPath>..\..\DataBaseLib\IMDBLib\bin\Debug\net8.0\IMDBLib.dll</HintPath>
+      <HintPath>C:\Users\hifnh\Desktop\DatabaseAsig\IMDBLib\bin\Debug\net8.0\IMDBLib.dll</HintPath>
     </Reference>
   </ItemGroup>
 
